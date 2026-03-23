@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="HalluciGuard Banner" width="100%"/>
+  <img src="assets/banner.png" alt="Project Banner" width="100%"/>
 </p>
 
 <h1 align="center">🛡️ Detecting and Mitigating Hallucinations in Open-Domain Question Answering</h1>
