@@ -121,9 +121,10 @@ numpy==1.25.2
 pandas==2.0.3
 scikit_learn==1.3.0
 spacy==3.6.1
-torch==2.0.1
+torch==2.3.0
 tqdm==4.66.1
-transformers==4.31.0
+transformers==4.43.1
+huggingface_hub
 ```
 
 
@@ -209,3 +210,95 @@ The results presented in `result_sent_halu.xlsx` are as follows:
 |             | Our_score   |
 | ----------- | ----------- |
 | llamabase7b | 78.76393327 |
+
+---
+
+---
+
+## 🔝 2026 Project Overhaul: LLaMA 3.1 & Multi-Layer Latent Dynamics
+
+This project introduces a major enhancement to the original MIND framework, specifically optimized for modern LLM architectures (2024+). This overhaul serves as the **Novelty Core** for the CS6120 project.
+
+### 🧠 The Thesis: Beyond Single-Layer Averaging
+The original MIND framework (ACL 2024) blindly averaged all hidden layers to extract internal states. Our 2026 enhancement argues that **inter-layer disagreement** and **latent trajectory** (the "deltas" between layers) provide a more predictive signal for hallucinations. We validate this using the modern **LLaMA 3.1 8B** model.
+
+---
+
+### 🎨 Implemented Strategies (`--strategy multi_layer`)
+
+We chose a "Combined Strategy" that merges the three most informative signals into one 40,960-dimensional feature vector.
+
+#### 1. Concatenated Multi-Layer States (`hd_multi_last_token`)
+*   **What was done**: Instead of averaging 32 layers, we extract and concatenate the last-token hidden states from Layers **1, 8, 16, 24, and 32**.
+*   **Result**: 5 layers × 4,096 dims = **20,480 dimensions**.
+*   **Rationale**: Captures discrete stages of the Transformer block—from initial syntactic parsing to final output decision.
+
+#### 2. Multi-Layer Sequence Pooling (`hd_multi_mean`)
+*   **What was done**: Mean-pools all tokens across the sequence from the **First, Middle, and Last** layers (Layers 1, 16, 32).
+*   **Result**: 3 layers × 4,096 dims = **12,288 dimensions**.
+*   **Rationale**: Tracks the model's high-level semantic "confidence" at different depths of the stack.
+
+#### 3. Latent Space Deltas (`hd_deltas`)
+*   **What was done**: Calculates the vector difference between layer pairs: `(L32 - L24)` and `(L16 - L1)`.
+*   **Result**: 2 pairs × 4,096 dims = **8,192 dimensions**.
+*   **Rationale**: **High Novelty.** Significant jumps in latent space between layers indicate internal "correction" or "uncertainty," which are strong precursors to hallucination.
+
+---
+
+### 📥 Technical Implementation Summary (Teammate Audit File)
+
+| File Path | Type | Key Changes for Verification |
+| :--- | :--- | :--- |
+| [`utils/multi_layer.py`](file:///c:/MSCS/Spring2026(ONE%20LAST%20DANCE)/CS6120/MIND/utils/multi_layer.py) | **[NEW]** | Created a strategy-agnostic extraction engine. Defines the 40k feature dimensionality. |
+| [`utils/model.py`](file:///c:/MSCS/Spring2026(ONE%20LAST%20DANCE)/CS6120/MIND/utils/model.py) | **[MOD]** | Upgraded to `AutoModelForCausalLM` and `AutoTokenizer`. Added `llama3base` and `llama3chat` families. Load as `float16`. |
+| [`utils/gen.py`](file:///c:/MSCS/Spring2026(ONE%20LAST%20DANCE)/CS6120/MIND/utils/gen.py) | **[MOD]** | Added `apply_chat_template` and a universal index-based answer detection algorithm (`find_answer_start`). |
+| [`generate_data.py`](file:///c:/MSCS/Spring2026(ONE%20LAST%20DANCE)/CS6120/MIND/generate_data.py) | **[MOD]** | Rewrote `@` token detection to be dynamic per tokenizer. Added LLaMA 3 chat format parsing. |
+| [`generate_hd.py`](file:///c:/MSCS/Spring2026(ONE%20LAST%20DANCE)/CS6120/MIND/generate_hd.py) | **[MOD]** | Integrated `strategy` flag. Saves 3-channel JSON files: `hd_multi_last_token`, `hd_multi_mean`, `hd_deltas`. |
+| [`train.py`](file:///c:/MSCS/Spring2026(ONE%20LAST%20DANCE)/CS6120/MIND/auto-labeled/train/train.py) | **[MOD]** | Dynamically scales the MLP input layer from **8k to 40k** based on strategy. |
+
+---
+
+### 🛠️ Execution Steps (Teammate Guide)
+
+#### Step 0: Authentication (Prerequisite)
+LLaMA 3.1 is a gated model. Teammates must request access at [HuggingFace](https://huggingface.co/meta-llama/Llama-3.1-8B).
+```python
+!pip install transformers huggingface_hub
+from huggingface_hub import login
+login(token="YOUR_READ_ACCESS_TOKEN")
+```
+
+#### Step 1: Data Generation
+```bash
+python generate_data.py --model_family llama3base --model_type 8 --gpu 0
+```
+
+#### Step 2: Feature Extraction
+Extract the 2026 enhanced feature set.
+```bash
+python generate_hd.py --model_family llama3base --model_type 8 --strategy multi_layer --gpu 0
+```
+*   **Expected Output**: Check `output/llama3base8b/` for `hd_deltas_train.json` (the new novel feature).
+
+#### Step 3: Training
+```bash
+cd auto-labeled/train
+python train.py --model_name llama3base8b --strategy multi_layer --device cuda:0
+```
+*   **Verification**: Logs must show `Input size: 40960`.
+
+#### Step 4: Evaluation
+```bash
+python detection_score.py --strategy multi_layer --gpu 0
+```
+
+---
+
+### ✅ Checklist for Verification
+*   [ ] Did the training log report an input size of 40,960 for the `multi_layer` strategy?
+*   [ ] Does `utils/multi_layer.py` exist and contain the delta calculation logic?
+*   [ ] Can you successfully run `generate_hd.py --strategy original` to verify backward compatibility (8,192 dims)?
+*   [ ] Does the HELM evaluation report AUC for the `multi_layer` model?
+
+
+
