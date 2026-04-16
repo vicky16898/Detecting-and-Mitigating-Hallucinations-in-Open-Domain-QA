@@ -140,19 +140,20 @@ def find_first_and_next_token(text, e, idx, input_id, prompt=""):
         if input_id[0][i] != new_input_id[i]:
             return []
 
-    first_token = new_input_id[len(input_id[0])]
+    first_token = new_input_id[len(input_id[0])] # Token immediately after the prefix (first token of the entity)
 
-    # Find @ token position
     if isinstance(at_id, list):
-        at_position = len(new_input_id) - 1
-        for i in range(len(new_input_id)):
-            if new_input_id[i] < first_token:
-                continue
+        at_position = None
+        for i in range(len(input_id[0]), len(new_input_id)):  # start after prompt
             if new_input_id[i] in at_id:
                 at_position = i
                 break
+        if at_position is None:
+            print(f"None of the @ token IDs {at_id} were found in the new input IDs.")
+            return []
     else:
         try:
+            print(f"Looking for @ token ID {at_id} in new input IDs...")
             at_position = new_input_id.index(at_id)
         except ValueError:
             # @ token not found — might be tokenized differently in LLaMA 3
@@ -204,8 +205,7 @@ def find_first_and_next_token_for_chat(text, e, idx, input_id, title):
 # ──────────────────────────────────────────────
 # Main data generation loop
 # ──────────────────────────────────────────────
-
-print(f"Model: {model_family}{model_type}b")
+print(f"Model: {model_family}{model_type}b (device = {model.device})")
 print(f"Output: {output_path}")
 
 for data_type in ["train", "valid", "test"]:

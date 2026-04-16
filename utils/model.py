@@ -69,11 +69,13 @@ def get_model(model_type, model_family, max_new_tokens=1):
         )
         tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-        # Dynamically find @ token ID from tokenizer
-        at_id = tokenizer.encode("@", add_special_tokens=False)
-        if len(at_id) == 1:
-            at_id = at_id[0]
-        # else at_id stays as a list (multi-token)
+        # # Dynamically find @ token ID from tokenizer
+        # at_id = tokenizer.encode("@", add_special_tokens=False)
+        # if len(at_id) == 1:
+        #     at_id = at_id[0]
+        # # else at_id stays as a list (multi-token)
+        vocab = tokenizer.get_vocab()
+        at_id = [v for k, v in vocab.items() if k.strip() == "@" or k in {"@", "Ġ@", "▁@"}]
 
         # Set pad token if not set
         if tokenizer.pad_token_id is None:
