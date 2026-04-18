@@ -36,9 +36,10 @@ Llama 3.1 is a **gated model**.
 
 ## 🚀 Execution Steps (Google Colab)
 
-### 1. Setup
+### 1. Setup & Clone
 ```python
-!git clone https://github.com/vicky16898/Detecting-and-Mitigating-Hallucinations-in-Open-Domain-QA.git
+# Clone from the public repository (vicky-testing branch)
+!git clone -b vicky-testing https://github.com/vicky16898/Detecting-and-Mitigating-Hallucinations-in-Open-Domain-QA.git
 %cd Detecting-and-Mitigating-Hallucinations-in-Open-Domain-QA
 !pip install -r requirements.txt
 !python -m spacy download en_core_web_sm
