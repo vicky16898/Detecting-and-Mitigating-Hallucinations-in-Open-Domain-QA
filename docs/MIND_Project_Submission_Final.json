@@ -35,7 +35,7 @@
     "import shutil\n",
     "\n",
     "# 1. ALWAYS start from /content to avoid nesting\n",
-    "%cd /content\n",
+    "os.chdir('/content')\n",
     "\n",
     "# 2. Clean up old versions if they exist\n",
     "repo_name = \"Detecting-and-Mitigating-Hallucinations-in-Open-Domain-QA\"\n",
@@ -47,7 +47,7 @@
     "!git clone -b vicky-testing https://github.com/vicky16898/Detecting-and-Mitigating-Hallucinations-in-Open-Domain-QA.git\n",
     "\n",
     "# 4. Move into the repo\n",
-    "%cd {repo_name}\n",
+    "os.chdir(f'/content/{repo_name}')\n",
     "print(\"\\n📍 Current Branch:\")\n",
     "!git branch"
    ]
@@ -56,7 +56,8 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "## 📦 Step 2: Install Dependencies & Download Data"
+    "## 📦 Step 2: Install Dependencies & Download Data\n",
+    "This cell will also auto-repair your GPU environment if it was broken by previous installs."
    ]
   },
   {
@@ -65,11 +66,23 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "!pip install -r requirements.txt\n",
+    "import torch\n",
+    "import os\n",
+    "import shutil\n",
+    "\n",
+    "# 1. AUTO-REPAIR CUDA if broken\n",
+    "if not torch.cuda.is_available():\n",
+    "    print(\"⚠️ GPU Support is broken! Attempting Auto-Repair...\")\n",
+    "    !pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121\n",
+    "    print(\"✅ Restart your runtime (Runtime -> Restart session) and run Step 1 again.\")\n",
+    "    import sys\n",
+    "    sys.exit()\n",
+    "\n",
+    "# 2. Install normal requirements (Force upgrade to avoid conflicts)\n",
+    "!pip install --upgrade -r requirements.txt\n",
     "!python -m spacy download en_core_web_sm\n",
     "\n",
-    "# --- 📥 Download Wikipedia Source Data ---\n",
-    "import os\n",
+    "# 3. Download Wikipedia Source Data\n",
     "import gdown\n",
     "import zipfile\n",
     "\n",
@@ -88,7 +101,6 @@
     "    print(f\"✅ Data extracted to {wiki_dir}\")\n",
     "elif os.path.exists(output):\n",
     "    print(\"⚠️ Downloaded file is not a zip. Attempting to Move as raw JSON...\")\n",
-    "    # If it's a single JSON file, we'll try to move it to the wiki dir\n",
     "    shutil.move(output, os.path.join(wiki_dir, \"wiki_train.json\"))\n",
     "    print(f\"✅ File moved to {wiki_dir}/wiki_train.json\")"
    ]
