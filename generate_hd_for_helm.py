@@ -4,7 +4,7 @@ import argparse
 
 # ─────────────────── Config ───────────────────
 parser = argparse.ArgumentParser()
-parser.add_argument("--gpu", type=str, default="0")
+parser.add_argument("--gpu", type=str, default="cpu")
 parser.add_argument("--model_type", type=str, default="8")
 parser.add_argument("--model_family", type=str, default="llama3base")
 parser.add_argument("--strategy", type=str, default="multi_layer",
