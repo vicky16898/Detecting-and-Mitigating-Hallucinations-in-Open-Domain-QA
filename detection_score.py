@@ -3,7 +3,7 @@ import sys
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--gpu", type=str, default="0")
+parser.add_argument("--gpu", type=str, default="cpu")
 parser.add_argument("--task_name", type=str, default="helm")
 parser.add_argument("--strategy", type=str, default="multi_layer",
                     choices=["original", "multi_layer"])
@@ -35,19 +35,20 @@ def get_AUC(preds, human_labels, pos_label=1, oneminus_pred=False):
 
 class Model():
     def __init__(self, input_size, path):
-        self.model = nn.Sequential()
-        self.model.add_module("dropout", nn.Dropout(0.2))
-        self.model.add_module("linear1", nn.Linear(input_size, 256))
-        self.model.add_module("relu1", nn.ReLU())
-        self.model.add_module("linear2", nn.Linear(256, 128))
-        self.model.add_module("relu2", nn.ReLU())
-        self.model.add_module("linear3", nn.Linear(128, 64))
-        self.model.add_module("relu3", nn.ReLU())
-        self.model.add_module("linear4", nn.Linear(64, 2))
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.model.load_state_dict(
-            torch.load(path, map_location="cpu")["model_state_dict"]
+        self.model = nn.Sequential(
+            nn.Dropout(0.2),
+            nn.Linear(input_size, 256), nn.ReLU(),
+            nn.Linear(256, 128),        nn.ReLU(),
+            nn.Linear(128, 64),         nn.ReLU(),
+            nn.Linear(64, 2),
         )
+        # Checkpoints from train.py save HalluClassifier.state_dict(), which
+        # wraps the above in `self.net` -> keys are prefixed with "net.".
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        state_dict = torch.load(path, map_location="cpu")["model_state_dict"]
+        if any(k.startswith("net.") for k in state_dict):
+            state_dict = {k[len("net."):]: v for k, v in state_dict.items()}
+        self.model.load_state_dict(state_dict)
         self.model.to(self.device)
         self.model.eval()
 
@@ -177,15 +178,15 @@ import pandas as pd
 
 suffix = f"_{strategy}" if strategy != "original" else ""
 df = pd.DataFrame(result_sent_halu)
-df.to_excel(root_path + f"/result_sent_halu{suffix}.xlsx")
+df.to_csv(root_path + f"/result_sent_halu{suffix}.csv")
 df = pd.DataFrame(result_psg_corr)
-df.to_excel(root_path + f"/result_psg_corr{suffix}.xlsx")
+df.to_csv(root_path + f"/result_psg_corr{suffix}.csv")
 df = pd.DataFrame(result_psg_halu)
-df.to_excel(root_path + f"/result_psg_halu{suffix}.xlsx")
+df.to_csv(root_path + f"/result_psg_halu{suffix}.csv")
 df = pd.DataFrame(result_sent_corr)
-df.to_excel(root_path + f"/result_sent_corr{suffix}.xlsx")
+df.to_csv(root_path + f"/result_sent_corr{suffix}.csv")
 
-print(f"\nResults saved with suffix '{suffix}'")
+print(f"\nResults saved as CSV with suffix '{suffix}'")
 print("Sentence-level hallucination AUC:")
 for k, v in result_sent_halu["Our_score"].items():
     print(f"  {k}: {v:.2f}")
