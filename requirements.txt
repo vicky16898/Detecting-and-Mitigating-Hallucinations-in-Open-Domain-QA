@@ -5,3 +5,4 @@ tqdm>=4.66.1
 transformers>=4.43.1
 huggingface_hub
 openai
+gdown
