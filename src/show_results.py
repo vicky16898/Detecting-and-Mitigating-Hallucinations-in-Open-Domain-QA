@@ -38,7 +38,15 @@ def print_table(title, table):
     print(f"  {'=' * (len(header) - 2)}")
     print(header)
     print(sep)
-    for strategy, row in table.iterrows():
+
+    original_rows = [(s, row) for s, row in table.iterrows() if s == "original"]
+    other_rows    = [(s, row) for s, row in table.iterrows() if s != "original"]
+
+    for strategy, row in original_rows:
+        print(f"  {strategy:<{row_w}}  " + "  ".join(f"{v:>{col_w}}" for v in row))
+    if original_rows and other_rows:
+        print(sep)
+    for strategy, row in other_rows:
         print(f"  {strategy:<{row_w}}  " + "  ".join(f"{v:>{col_w}}" for v in row))
     print()
 
@@ -56,5 +64,13 @@ for fname, metric_label, fmt in METRICS:
         continue
 
     table = pd.DataFrame(rows).T
+
+    # Sort non-original rows by mean score descending before formatting
+    original = table[table.index == "original"]
+    others   = table[table.index != "original"].sort_values(
+        by=table.columns.tolist(), ascending=False,
+        key=lambda col: col.apply(pd.to_numeric, errors="coerce")
+    )
+    table = pd.concat([original, others])
     table = table.map(lambda x: format(x, fmt))
     print_table(metric_label, table)
