@@ -1,0 +1,20 @@
+*.ipynb
+.*
+*__pycache__*
+*.pt
+*.pth
+*.pyc
+
+slurm_logs
+notebooks
+# Ignore everything under data/ except the committed helm reference files
+data/*
+!data/helm/
+data/helm/*
+!data/helm/readme.txt
+!data/helm/prompt_mapping.txt
+!data/helm/data/
+data/helm/data/*
+!data/helm/data/*/
+data/helm/data/*/*
+!data/helm/data/*/data.json
