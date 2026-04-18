@@ -15,6 +15,7 @@ from dataset import TrainDataset
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utils.multi_layer import get_feature_keys, get_input_size, get_model_config
+from classifier import HalluClassifier
 
 
 # ---------------------------------------------------------------------------
@@ -95,27 +96,6 @@ def get_data(root_path: str, data_model: str, split: str, strategy: str):
         samples.append({"hd": right_vec, "label": 0})
         samples.append({"hd": hallu_vec, "label": 1})
     return samples
-
-
-# ---------------------------------------------------------------------------
-# Model
-# ---------------------------------------------------------------------------
-
-class HalluClassifier(nn.Module):
-    """4-layer MLP that classifies a hidden-state vector as correct vs hallucinated."""
-
-    def __init__(self, input_size: int, dropout: float = 0.2):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Dropout(dropout),
-            nn.Linear(input_size, 256), nn.ReLU(),
-            nn.Linear(256, 128),        nn.ReLU(),
-            nn.Linear(128, 64),         nn.ReLU(),
-            nn.Linear(64, 2),
-        )
-
-    def forward(self, x):
-        return self.net(x)
 
 
 # ---------------------------------------------------------------------------
