@@ -1,4 +1,5 @@
-*.ipynb
+# Project Submission Notebook allowed
+!docs/MIND_Project_Submission.ipynb
 .*
 *__pycache__*
 *.pt
