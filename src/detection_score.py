@@ -11,7 +11,6 @@ args = parser.parse_args()
 
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
-import torch.nn as nn
 import torch
 from tqdm import tqdm
 import torch.nn.functional as F
@@ -21,6 +20,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
 from utils.multi_layer import get_model_config, get_input_size, get_feature_keys
+from classifier import HalluClassifier
 
 task_name = args.task_name
 strategy = args.strategy
@@ -33,30 +33,20 @@ def get_AUC(preds, human_labels, pos_label=1, oneminus_pred=False):
     return auc(R, P) * 100
 
 
-class Model():
-    def __init__(self, input_size, path):
-        self.model = nn.Sequential(
-            nn.Dropout(0.2),
-            nn.Linear(input_size, 256), nn.ReLU(),
-            nn.Linear(256, 128),        nn.ReLU(),
-            nn.Linear(128, 64),         nn.ReLU(),
-            nn.Linear(64, 2),
-        )
-        # Checkpoints from train.py save HalluClassifier.state_dict(), which
-        # wraps the above in `self.net` -> keys are prefixed with "net.".
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        state_dict = torch.load(path, map_location="cpu")["model_state_dict"]
-        if any(k.startswith("net.") for k in state_dict):
-            state_dict = {k[len("net."):]: v for k, v in state_dict.items()}
-        self.model.load_state_dict(state_dict)
-        self.model.to(self.device)
-        self.model.eval()
+def load_classifier(input_size, path):
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    model = HalluClassifier(input_size)
+    state_dict = torch.load(path, map_location="cpu")["model_state_dict"]
+    model.load_state_dict(state_dict)
+    model.to(device)
+    model.eval()
+    return model, device
 
-    def eval(self, hd):
-        input_ = torch.tensor([hd]).to(self.device)
-        score = self.model(input_)
-        hallu_sm = F.softmax(score, dim=1)[:, 1]
-        return hallu_sm[0].item()
+
+def eval_score(model, device, hd):
+    input_ = torch.tensor([hd]).to(device)
+    logits = model(input_)
+    return F.softmax(logits, dim=1)[:, 1][0].item()
 
 
 # ──────────────────────────────────────────────
@@ -87,7 +77,7 @@ for mo in tqdm(model_dirs):
     )
     print(f"\nModel: {mo} | Strategy: {strategy} | Input size: {input_size}")
 
-    mlp = Model(input_size, ckpt_path)
+    mlp, device = load_classifier(input_size, ckpt_path)
 
     if task_name == "helm":
         # Ablation strategies share the multi_layer HD file
@@ -135,7 +125,7 @@ for mo in tqdm(model_dirs):
                     elif key == "hd_last_mean" and "hd_last_mean" in d:
                         feature_vec += d["hd_last_mean"]
 
-                score = mlp.eval(feature_vec)
+                score = eval_score(mlp, device,feature_vec)
                 labels.append(dt["label"])
                 pre.append(score)
                 if dt["label"] == 1:
@@ -154,7 +144,7 @@ for mo in tqdm(model_dirs):
                 elif key == "hd_last_mean" and "hd_last_mean" in hd[k]["passage"]:
                     passage_vec += hd[k]["passage"]["hd_last_mean"]
 
-            psgscore = mlp.eval(passage_vec)
+            psgscore = eval_score(mlp, device,passage_vec)
             psglabels.append(psg_bi)
             psgpre.append(psgscore)
             psglabelsbysent.append(psg_not_bi)
