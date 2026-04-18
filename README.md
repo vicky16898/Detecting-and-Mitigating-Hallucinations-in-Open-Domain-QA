@@ -37,6 +37,11 @@ python src/generate_hd.py --model_family <family> --model_type <size> --strategy
 
 - `--strategy original` — 2-channel features (last-token avg + last-layer mean), dim = `2 × hidden_dim`
 - `--strategy multi_layer` — 10-channel features (5 last-token layers + 3 mean-pool layers + 2 deltas), dim = `10 × hidden_dim`
+- `--strategy multi_layer_last_token` — last-token concat only (subset of `multi_layer`), dim = `5 × hidden_dim`
+- `--strategy multi_layer_mean` — mean-pool only (subset of `multi_layer`), dim = `3 × hidden_dim`
+- `--strategy multi_layer_deltas` — layer deltas only (subset of `multi_layer`), dim = `2 × hidden_dim`
+
+The three `multi_layer_*` ablation strategies reuse the feature files written by `--strategy multi_layer`, so no separate `generate_hd.py` run is needed for them.
 
 Output: `data/auto-labeled/output/<model>/<strategy>/{feature_key}_{split}.json` for each key returned by `get_feature_keys(strategy)`.
 
