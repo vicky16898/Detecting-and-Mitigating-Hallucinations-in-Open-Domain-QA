@@ -5,14 +5,14 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=12
 #SBATCH --mem=18G
-#SBATCH --time=08:00:00
-#SBATCH --partition=gpu               
-#SBATCH --gres=gpu:v100-sxm2:1
+#SBATCH --time=06:00:00
+#SBATCH --partition=jiang               
+#SBATCH --gres=gpu:a5000:1
 
 source /home/${USER}/.bashrc
 source activate odtformer
 
 cd /projects/vig/ajay/persistent_memory/Detecting-and-Mitigating-Hallucinations-in-Open-Domain-QA
-python generate_data.py --model_family llama3base --model_type 8 --gpu 0
+python generate_hd.py --model_family llama3base --model_type 8 --strategy multi_layer --gpu 0
 
 echo "Done!"
