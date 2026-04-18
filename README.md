@@ -125,6 +125,7 @@ torch==2.3.0
 tqdm==4.66.1
 transformers==4.43.1
 huggingface_hub
+openai
 ```
 
 
@@ -134,7 +135,7 @@ huggingface_hub
 ```bash
 conda create -n MIND python=3.9
 conda activate MIND
-pip install torch==2.0.1
+pip install torch==2.3.0
 pip install -r ./requirements.txt
 ```
 

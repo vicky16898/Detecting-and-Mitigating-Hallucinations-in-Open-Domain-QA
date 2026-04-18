@@ -12,7 +12,9 @@
 source /home/${USER}/.bashrc
 source activate odtformer
 
-cd /projects/vig/ajay/persistent_memory/Detecting-and-Mitigating-Hallucinations-in-Open-Domain-QA
+# Get project root (scripts are in project_root/scripts/)
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$(dirname "$DIR")"
 python src/generate_helm_data.py --model_family llama3base --model_type 8 --gpu 0
 
 echo "Done!"
