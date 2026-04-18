@@ -33,13 +33,21 @@ def setup_seed(seed: int) -> None:
 # Data loading
 # ---------------------------------------------------------------------------
 
+def _feature_dir(strategy: str) -> str:
+    """Ablation strategies share the multi_layer feature files."""
+    if strategy in ("multi_layer_last_token", "multi_layer_mean", "multi_layer_deltas"):
+        return "multi_layer"
+    return strategy
+
+
 def _load_feature_files(root_path: str, data_model: str, split: str, feature_keys, strategy: str):
     """Load one JSON file per feature key for the given split."""
     features = {}
+    feat_dir = _feature_dir(strategy)
     for key in feature_keys:
-        path = os.path.join(root_path, data_model, strategy, f"{key}_{split}.json")
+        path = os.path.join(root_path, data_model, feat_dir, f"{key}_{split}.json")
         if not os.path.exists(path):
-            available = os.listdir(os.path.join(root_path, data_model, strategy))
+            available = os.listdir(os.path.join(root_path, data_model, feat_dir))
             raise FileNotFoundError(
                 f"Feature file not found: {path}\nAvailable files: {available}"
             )
@@ -232,7 +240,7 @@ def parse_args():
     parser.add_argument("--output_path", type=str, default="./data/auto-labeled/output")
     parser.add_argument("--data_path",   type=str, default="./data/auto-labeled/output")
     parser.add_argument("--strategy",    type=str, default="multi_layer",
-                        choices=["original", "multi_layer"])
+                        choices=["original", "multi_layer", "multi_layer_last_token", "multi_layer_mean", "multi_layer_deltas"])
     parser.add_argument("--train_epoch", type=int,   default=20)
     parser.add_argument("--batch_size",  type=int,   default=32)
     parser.add_argument("--lr",          type=float, default=5e-4)

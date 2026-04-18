@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--gpu", type=str, default="cpu")
 parser.add_argument("--task_name", type=str, default="helm")
 parser.add_argument("--strategy", type=str, default="multi_layer",
-                    choices=["original", "multi_layer"])
+                    choices=["original", "multi_layer", "multi_layer_last_token", "multi_layer_mean", "multi_layer_deltas"])
 args = parser.parse_args()
 
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
@@ -90,7 +90,9 @@ for mo in tqdm(model_dirs):
     mlp = Model(input_size, ckpt_path)
 
     if task_name == "helm":
-        hd_result_path = f"{root_path}/hd/{mo}/hd_{strategy}.json"
+        # Ablation strategies share the multi_layer HD file
+        hd_strategy = "multi_layer" if strategy in ("multi_layer_last_token", "multi_layer_mean", "multi_layer_deltas") else strategy
+        hd_result_path = f"{root_path}/hd/{mo}/hd_{hd_strategy}.json"
 
         # Fallback: try old-style hd.json for backward compatibility
         if not os.path.exists(hd_result_path):
