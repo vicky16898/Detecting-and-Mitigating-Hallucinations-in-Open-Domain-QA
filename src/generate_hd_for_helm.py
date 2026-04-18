@@ -9,7 +9,7 @@ parser.add_argument("--gpu", type=str, default="cpu")
 parser.add_argument("--model_type", type=str, default="8")
 parser.add_argument("--model_family", type=str, default="llama3base")
 parser.add_argument("--strategy", type=str, default="multi_layer",
-                    choices=["original", "multi_layer"],
+                    choices=["original", "multi_layer", "multi_layer_last_token", "multi_layer_mean", "multi_layer_deltas"],
                     help="Feature extraction strategy")
 args = parser.parse_args()
 

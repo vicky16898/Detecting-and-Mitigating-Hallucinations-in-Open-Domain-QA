@@ -20,7 +20,7 @@ cd /projects/vig/ajay/persistent_memory/Detecting-and-Mitigating-Hallucinations-
 MODEL_NAME="llama3base8b"
 OUTPUT_PATH="./data/auto-labeled/output"
 DATA_PATH="./data/auto-labeled/output"
-STRATEGY="multi_layer" # "multi_layer" / "original"
+STRATEGY="multi_layer_deltas" # ["original", "multi_layer", "multi_layer_last_token", "multi_layer_mean", "multi_layer_deltas"]
 TRAIN_EPOCH=20
 BATCH_SIZE=32
 LR=5e-4

@@ -2,15 +2,24 @@
 Multi-layer hidden state feature extraction utilities.
 
 Strategies:
-  - "original":    Reproduces the original MIND paper behavior
-                   (avg all layers for last token + last layer mean across tokens)
-                   → 2 * hidden_size dimensions
+  - "original":              Reproduces the original MIND paper behavior
+                             (avg all layers for last token + last layer mean across tokens)
+                             → 2 * hidden_size dimensions
 
-  - "multi_layer": Concatenate hidden states from selected representative layers
-                   (last token from layers: 1, N//4, N//2, 3N//4, N)
-                   + mean across tokens from first, mid, last layers
-                   + layer deltas (late - early)
-                   → much richer feature set
+  - "multi_layer":           Concatenate hidden states from selected representative layers
+                             (last token from layers: 1, N//4, N//2, 3N//4, N)
+                             + mean across tokens from first, mid, last layers
+                             + layer deltas (late - early)
+                             → much richer feature set
+
+  - "multi_layer_last_token": Only the last-token concat feature from multi_layer
+                             → 5 * hidden_size dimensions
+
+  - "multi_layer_mean":      Only the mean-pooled feature from multi_layer
+                             → 3 * hidden_size dimensions
+
+  - "multi_layer_deltas":    Only the layer-delta feature from multi_layer
+                             → 2 * hidden_size dimensions
 """
 
 import torch
@@ -40,7 +49,7 @@ def select_layer_indices(num_layers, strategy="multi_layer"):
             "mean_token_layers": [num_layers],                     # last layer only
         }
 
-    elif strategy == "multi_layer":
+    elif strategy in ("multi_layer", "multi_layer_last_token", "multi_layer_mean", "multi_layer_deltas"):
         # Pick 5 representative layers: first, 1/4, 1/2, 3/4, last
         quarter = max(1, num_layers // 4)
         half = max(1, num_layers // 2)
@@ -99,30 +108,30 @@ def extract_features(hidden_states, strategy="multi_layer", start_at=0):
         hds_mean = torch.mean(hidden_states[num_layers][0][max(0, start_at - 1):], dim=0)
         features["hd_last_mean"] = hds_mean.tolist()
 
-    elif strategy == "multi_layer":
-        # ── Feature 1: Last token from each selected layer (CONCATENATED) ──
-        last_token_parts = []
-        for layer_idx in layer_info["last_token_layers"]:
-            vec = hidden_states[layer_idx][0][-1].clone().detach()
-            last_token_parts.append(vec)
-        features["hd_multi_last_token"] = torch.cat(last_token_parts).tolist()
+    elif strategy in ("multi_layer", "multi_layer_last_token", "multi_layer_mean", "multi_layer_deltas"):
+        if strategy in ("multi_layer", "multi_layer_last_token"):
+            last_token_parts = []
+            for layer_idx in layer_info["last_token_layers"]:
+                vec = hidden_states[layer_idx][0][-1].clone().detach()
+                last_token_parts.append(vec)
+            features["hd_multi_last_token"] = torch.cat(last_token_parts).tolist()
 
-        # ── Feature 2: Mean across tokens from first, mid, last layers ──
-        mean_parts = []
-        for layer_idx in layer_info["mean_token_layers"]:
-            vec = torch.mean(
-                hidden_states[layer_idx][0][max(0, start_at - 1):], dim=0
-            )
-            mean_parts.append(vec)
-        features["hd_multi_mean"] = torch.cat(mean_parts).tolist()
+        if strategy in ("multi_layer", "multi_layer_mean"):
+            mean_parts = []
+            for layer_idx in layer_info["mean_token_layers"]:
+                vec = torch.mean(
+                    hidden_states[layer_idx][0][max(0, start_at - 1):], dim=0
+                )
+                mean_parts.append(vec)
+            features["hd_multi_mean"] = torch.cat(mean_parts).tolist()
 
-        # ── Feature 3: Layer deltas (difference between layers) ──
-        delta_parts = []
-        for (high_layer, low_layer) in layer_info["delta_pairs"]:
-            high_vec = hidden_states[high_layer][0][-1].clone().detach()
-            low_vec = hidden_states[low_layer][0][-1].clone().detach()
-            delta_parts.append(high_vec - low_vec)
-        features["hd_deltas"] = torch.cat(delta_parts).tolist()
+        if strategy in ("multi_layer", "multi_layer_deltas"):
+            delta_parts = []
+            for (high_layer, low_layer) in layer_info["delta_pairs"]:
+                high_vec = hidden_states[high_layer][0][-1].clone().detach()
+                low_vec = hidden_states[low_layer][0][-1].clone().detach()
+                delta_parts.append(high_vec - low_vec)
+            features["hd_deltas"] = torch.cat(delta_parts).tolist()
 
     return features
 
@@ -147,19 +156,21 @@ def get_input_size(hidden_dim, num_layers, strategy="multi_layer"):
         # hd_last_token (hidden_dim) + hd_last_mean (hidden_dim)
         return hidden_dim * 2
 
-    elif strategy == "multi_layer":
+    elif strategy in ("multi_layer", "multi_layer_last_token", "multi_layer_mean", "multi_layer_deltas"):
         layer_info = select_layer_indices(num_layers, strategy)
 
-        # hd_multi_last_token: one hidden_dim per selected layer
         last_token_dim = len(layer_info["last_token_layers"]) * hidden_dim
+        mean_dim       = len(layer_info["mean_token_layers"]) * hidden_dim
+        delta_dim      = len(layer_info["delta_pairs"])        * hidden_dim
 
-        # hd_multi_mean: one hidden_dim per selected layer
-        mean_dim = len(layer_info["mean_token_layers"]) * hidden_dim
-
-        # hd_deltas: one hidden_dim per delta pair
-        delta_dim = len(layer_info["delta_pairs"]) * hidden_dim
-
-        return last_token_dim + mean_dim + delta_dim
+        if strategy == "multi_layer":
+            return last_token_dim + mean_dim + delta_dim
+        elif strategy == "multi_layer_last_token":
+            return last_token_dim
+        elif strategy == "multi_layer_mean":
+            return mean_dim
+        elif strategy == "multi_layer_deltas":
+            return delta_dim
 
     else:
         raise ValueError(f"Unknown strategy: {strategy}")
@@ -210,5 +221,11 @@ def get_feature_keys(strategy):
         return ["hd_last_token", "hd_last_mean"]
     elif strategy == "multi_layer":
         return ["hd_multi_last_token", "hd_multi_mean", "hd_deltas"]
+    elif strategy == "multi_layer_last_token":
+        return ["hd_multi_last_token"]
+    elif strategy == "multi_layer_mean":
+        return ["hd_multi_mean"]
+    elif strategy == "multi_layer_deltas":
+        return ["hd_deltas"]
     else:
         raise ValueError(f"Unknown strategy: {strategy}")
