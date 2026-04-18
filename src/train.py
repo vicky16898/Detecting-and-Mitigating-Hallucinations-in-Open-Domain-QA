@@ -33,13 +33,13 @@ def setup_seed(seed: int) -> None:
 # Data loading
 # ---------------------------------------------------------------------------
 
-def _load_feature_files(root_path: str, data_model: str, split: str, feature_keys):
+def _load_feature_files(root_path: str, data_model: str, split: str, feature_keys, strategy: str):
     """Load one JSON file per feature key for the given split."""
     features = {}
     for key in feature_keys:
-        path = os.path.join(root_path, data_model, f"{key}_{split}.json")
+        path = os.path.join(root_path, data_model, strategy, f"{key}_{split}.json")
         if not os.path.exists(path):
-            available = os.listdir(os.path.join(root_path, data_model))
+            available = os.listdir(os.path.join(root_path, data_model, strategy))
             raise FileNotFoundError(
                 f"Feature file not found: {path}\nAvailable files: {available}"
             )
@@ -77,7 +77,7 @@ def get_data(root_path: str, data_model: str, split: str, strategy: str):
     Label 0 = correct (right), label 1 = hallucinated.
     """
     feature_keys = get_feature_keys(strategy)
-    feature_files = _load_feature_files(root_path, data_model, split, feature_keys)
+    feature_files = _load_feature_files(root_path, data_model, split, feature_keys, strategy)
     hallu, right, num_pairs = _collect_samples(feature_files, feature_keys)
 
     samples = []
@@ -256,7 +256,7 @@ def main():
     loss_fn   = build_loss_fn(train_ds, args.device)
     optimizer = build_optimizer(model, args.lr, args.wd)
 
-    log_dir = os.path.join(args.output_path, args.model_name, "train_log")
+    log_dir = os.path.join(args.output_path, args.model_name, args.strategy, "train_log")
     os.makedirs(log_dir, exist_ok=True)
 
     trainer = Trainer(

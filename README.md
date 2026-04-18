@@ -38,7 +38,7 @@ python src/generate_hd.py --model_family <family> --model_type <size> --strategy
 - `--strategy original` — 2-channel features (last-token avg + last-layer mean), dim = `2 × hidden_dim`
 - `--strategy multi_layer` — 10-channel features (5 last-token layers + 3 mean-pool layers + 2 deltas), dim = `10 × hidden_dim`
 
-Output: `data/auto-labeled/output/<model>/{feature_key}_{split}.json` for each key returned by `get_feature_keys(strategy)`.
+Output: `data/auto-labeled/output/<model>/<strategy>/{feature_key}_{split}.json` for each key returned by `get_feature_keys(strategy)`.
 
 ### 3. Train the classifier
 
@@ -92,13 +92,18 @@ python src/detection_score.py --strategy <strategy>
 
 Requires both `data/helm/hd/<model>/hd_<strategy>.json` and `data/auto-labeled/output/<model>/<strategy>/train_log/best_acc_model.pt` to exist for a model to be scored.
 
-Output CSVs written to `data/helm/`:
-- `result_sent_halu.csv` — sentence-level hallucination AUC
-- `result_psg_halu.csv` — passage-level hallucination AUC
-- `result_sent_corr.csv` — sentence-level correlation
-- `result_psg_corr.csv` — passage-level correlation
+Output CSVs written to `data/helm/results/<strategy>/`:
+- `sent_halu.csv` — sentence-level hallucination AUC
+- `psg_halu.csv` — passage-level hallucination AUC
+- `sent_corr.csv` — sentence-level correlation
+- `psg_corr.csv` — passage-level correlation
 
-For `--strategy multi_layer` the files are suffixed `_multi_layer.csv`.
+To view results as a table:
+
+```bash
+python src/show_results.py                    # all strategies
+python src/show_results.py --strategy original
+```
 
 ---
 

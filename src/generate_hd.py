@@ -17,7 +17,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 model_type = args.model_type
 model_family = args.model_family
 strategy = args.strategy
-result_path = f"./data/auto-labeled/output/{model_family}{model_type}b"
+model_path = f"./data/auto-labeled/output/{model_family}{model_type}b"
+result_path = f"{model_path}/{args.strategy}"
 # ──────────────────────────────────────────────
 
 print(f"Model: {model_family}{model_type}b | Strategy: {strategy}")
@@ -120,8 +121,10 @@ def get_hd(text, title=None):
 
 feature_keys = get_feature_keys(strategy)
 
+os.makedirs(result_path, exist_ok=True)
+
 for data_type in ["train", "valid", "test"]:
-    data_path = f"{result_path}/data_{data_type}.json"
+    data_path = f"{model_path}/data_{data_type}.json"
     if not os.path.exists(data_path):
         print(f"Skipping {data_type}: {data_path} not found")
         continue

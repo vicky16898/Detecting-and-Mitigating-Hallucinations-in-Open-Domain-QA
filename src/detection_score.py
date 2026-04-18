@@ -75,7 +75,7 @@ result_psg_halu = {"Our_score": {}}
 result_sent_corr = {"Our_score": {}}
 
 for mo in tqdm(model_dirs):
-    ckpt_path = f"./data/auto-labeled/output/{mo}/train_log/best_acc_model.pt"
+    ckpt_path = f"./data/auto-labeled/output/{mo}/{args.strategy}/train_log/best_acc_model.pt"
     if not os.path.exists(ckpt_path):
         print(f"Skipping {mo}: no checkpoint found at {ckpt_path}")
         continue
@@ -176,17 +176,15 @@ for mo in tqdm(model_dirs):
 # Save results
 import pandas as pd
 
-suffix = f"_{strategy}" if strategy != "original" else ""
-df = pd.DataFrame(result_sent_halu)
-df.to_csv(root_path + f"/result_sent_halu{suffix}.csv")
-df = pd.DataFrame(result_psg_corr)
-df.to_csv(root_path + f"/result_psg_corr{suffix}.csv")
-df = pd.DataFrame(result_psg_halu)
-df.to_csv(root_path + f"/result_psg_halu{suffix}.csv")
-df = pd.DataFrame(result_sent_corr)
-df.to_csv(root_path + f"/result_sent_corr{suffix}.csv")
+out_dir = os.path.join(root_path, "results", strategy)
+os.makedirs(out_dir, exist_ok=True)
 
-print(f"\nResults saved as CSV with suffix '{suffix}'")
+pd.DataFrame(result_sent_halu).to_csv(os.path.join(out_dir, "sent_halu.csv"))
+pd.DataFrame(result_psg_halu).to_csv(os.path.join(out_dir, "psg_halu.csv"))
+pd.DataFrame(result_sent_corr).to_csv(os.path.join(out_dir, "sent_corr.csv"))
+pd.DataFrame(result_psg_corr).to_csv(os.path.join(out_dir, "psg_corr.csv"))
+
+print(f"\nResults saved to {out_dir}/")
 print("Sentence-level hallucination AUC:")
 for k, v in result_sent_halu["Our_score"].items():
     print(f"  {k}: {v:.2f}")

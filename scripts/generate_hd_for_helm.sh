@@ -13,6 +13,6 @@ source /home/${USER}/.bashrc
 source activate odtformer
 
 cd /projects/vig/ajay/persistent_memory/Detecting-and-Mitigating-Hallucinations-in-Open-Domain-QA
-python src/generate_hd_for_helm.py --model_family llama3base --model_type 8 --strategy multi_layer --gpu 0
+python src/generate_hd_for_helm.py --model_family llama3base --model_type 8 --strategy original --gpu 0
 
 echo "Done!"
