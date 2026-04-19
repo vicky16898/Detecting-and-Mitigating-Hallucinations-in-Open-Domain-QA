@@ -46,7 +46,7 @@ def get_model(model_type, model_family, max_new_tokens=1):
         model_path = "EleutherAI/gpt-j-6b"
         at_id = 2488
     elif model_family == "mpt":
-        model_path = "mosaicml/mpt-7b"
+        model_path = "maddes8cht/mosaicml-mpt-7b-instruct-gguf"
         at_id = [1214, 33]
     elif model_family == "vicuna":
         model_path = f"lmsys/vicuna-{model_type}-v1.5"
@@ -112,7 +112,6 @@ def get_model(model_type, model_family, max_new_tokens=1):
     elif "mpt" in model_family:
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
-            load_in_8bit=False,
             torch_dtype=torch.float32,
             low_cpu_mem_usage=True,
             trust_remote_code=True,
@@ -124,7 +123,6 @@ def get_model(model_type, model_family, max_new_tokens=1):
     else:
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
-            load_in_8bit=False,
             torch_dtype=torch.float32,
             low_cpu_mem_usage=True,
             device_map='auto'
