@@ -73,6 +73,11 @@ def _collect_samples(feature_files, feature_keys):
             right[key].append(sample["right"])
 
     num_pairs = len(hallu[feature_keys[0]])
+    if num_pairs == 0:
+        raise ValueError(
+            "No hallucination samples found. The model may not have generated any hallucinations. "
+            "Try a different model (e.g., llama3base8b instead of llama3chat8b)"
+        )
     for key in feature_keys:
         right[key] = right[key][:num_pairs]
     return hallu, right, num_pairs
