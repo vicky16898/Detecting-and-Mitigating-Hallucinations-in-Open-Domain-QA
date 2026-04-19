@@ -79,6 +79,9 @@ def chat_format_modern(messages, tokenizer, answer=None):
         ids = tokenizer.apply_chat_template(
             messages, add_generation_prompt=True, return_tensors=None
         )
+    # Extract input_ids from Encoding object if needed
+    if hasattr(ids, 'input_ids'):
+        ids = ids.input_ids
     return [ids]  # wrap in list to match old format: [[id1, id2, ...]]
 
 
