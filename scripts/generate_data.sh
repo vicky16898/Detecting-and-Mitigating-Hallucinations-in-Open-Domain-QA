@@ -13,6 +13,6 @@ source /home/${USER}/.bashrc
 source activate odtformer
 
 cd /projects/vig/ajay/persistent_memory/Detecting-and-Mitigating-Hallucinations-in-Open-Domain-QA
-python src/generate_data.py --model_family llama3base --model_type 8 --gpu 0
+python src/generate_data.py --model_family gptj --model_type 8 --gpu 0
 
 echo "Done!"

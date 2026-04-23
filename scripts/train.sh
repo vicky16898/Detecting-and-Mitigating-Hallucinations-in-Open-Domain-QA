@@ -5,9 +5,9 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=12
 #SBATCH --mem=24G
-#SBATCH --time=2:00:00
+#SBATCH --time=00:10:00
 #SBATCH --partition=gpu
-#SBATCH --gres=gpu:v100-sxm2:1
+#SBATCH --gres=gpu:h200:1
 
 set -eo pipefail
 
@@ -17,10 +17,10 @@ source activate odtformer
 cd /projects/vig/ajay/persistent_memory/Detecting-and-Mitigating-Hallucinations-in-Open-Domain-QA
 
 # train.py argument defaults
-MODEL_NAME="llama3base8b"
+MODEL_NAME="gptj7b"
 OUTPUT_PATH="./data/auto-labeled/output"
 DATA_PATH="./data/auto-labeled/output"
-STRATEGY="multi_layer_deltas" # ["original", "multi_layer", "multi_layer_last_token", "multi_layer_mean", "multi_layer_deltas"]
+STRATEGY="multi_layer" # ["original", "multi_layer", "multi_layer_last_token", "multi_layer_mean", "multi_layer_deltas"]
 TRAIN_EPOCH=20
 BATCH_SIZE=32
 LR=5e-4
