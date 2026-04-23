@@ -119,13 +119,8 @@ for mo in tqdm(model_dirs):
                 for key in feature_keys:
                     if key in d:
                         feature_vec += d[key]
-                    # Backward compat: old format used hd_last_token + hd_last_mean
-                    elif key == "hd_last_token" and "hd_last_token" in d:
-                        feature_vec += d["hd_last_token"]
-                    elif key == "hd_last_mean" and "hd_last_mean" in d:
-                        feature_vec += d["hd_last_mean"]
 
-                score = eval_score(mlp, device,feature_vec)
+                score = eval_score(mlp, device, feature_vec)
                 labels.append(dt["label"])
                 pre.append(score)
                 if dt["label"] == 1:
@@ -139,12 +134,8 @@ for mo in tqdm(model_dirs):
             for key in feature_keys:
                 if key in hd[k]["passage"]:
                     passage_vec += hd[k]["passage"][key]
-                elif key == "hd_last_token" and "hd_last_token" in hd[k]["passage"]:
-                    passage_vec += hd[k]["passage"]["hd_last_token"]
-                elif key == "hd_last_mean" and "hd_last_mean" in hd[k]["passage"]:
-                    passage_vec += hd[k]["passage"]["hd_last_mean"]
 
-            psgscore = eval_score(mlp, device,passage_vec)
+            psgscore = eval_score(mlp, device, passage_vec)
             psglabels.append(psg_bi)
             psgpre.append(psgscore)
             psglabelsbysent.append(psg_not_bi)
