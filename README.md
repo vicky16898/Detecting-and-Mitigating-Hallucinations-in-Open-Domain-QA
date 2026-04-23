@@ -10,7 +10,12 @@ Run the setup script to download and extract it in one step (requires `gdown`):
 
 ```bash
 pip install gdown
+
+# Mac / Linux
 bash setup_data.sh
+
+# Windows (PowerShell)
+python setup_data.py
 ```
 
 This removes any existing `data/` folder, downloads the archive from Drive, and extracts it — so the structure is always clean. The result CSVs under `data/helm/results/` are also committed directly to the repo.
@@ -48,7 +53,7 @@ On the cluster all scripts are run via `sbatch scripts/<name>.sh`. Logs go to `s
 Requires a trained checkpoint (included in the Drive download). Generates a response to the input paragraph, extracts hidden-state features, and prints a hallucination prediction.
 
 ```bash
-python src/demo.py \
+python demo.py \
   --paragraph "Marie Curie was born in Warsaw in 1867." \
   --model_name llama3base8b \
   --strategy original \

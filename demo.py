@@ -2,11 +2,11 @@
 Demo: generate a response to a paragraph and detect if it's hallucinated.
 
 Usage:
-    python src/demo.py --paragraph "Marie Curie was born in Warsaw in 1867." \
-                       --model_name llama3base8b \
-                       --strategy multi_layer \
-                       --ckpt_path data/auto-labeled/output/llama3base8b/multi_layer/train_log/best_acc_model.pt \
-                       --gpu 0
+    python demo.py --paragraph "Marie Curie was born in Warsaw in 1867." \
+                   --model_name llama3base8b \
+                   --strategy multi_layer \
+                   --ckpt_path data/auto-labeled/output/llama3base8b/multi_layer/train_log/best_acc_model.pt \
+                   --gpu 0
 """
 
 import os
@@ -32,11 +32,10 @@ os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 import torch
 import torch.nn.functional as F
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from utils.model import get_model
-from utils.multi_layer import get_model_config, get_input_size, get_feature_keys, extract_features
-from utils.gen import find_answer_start, chat_format_modern
-from classifier import HalluClassifier
+from src.utils.model import get_model
+from src.utils.multi_layer import get_model_config, get_input_size, get_feature_keys, extract_features
+from src.utils.gen import find_answer_start, chat_format_modern
+from src.classifier import HalluClassifier
 
 
 # ─────────────────────────────────────────────────────────
