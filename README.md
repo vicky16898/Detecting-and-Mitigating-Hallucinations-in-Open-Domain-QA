@@ -2,6 +2,26 @@
 
 This project extends the [MIND paper (ACL 2024)](https://arxiv.org/abs/2407.12943) with multi-layer hidden-state features and a HELM evaluation pipeline.
 
+## Data
+
+The full dataset (auto-labeled training data, HELM continuations, hidden-state features, and trained checkpoints) is too large to store in the repo and is hosted on Google Drive.
+
+**Download:** [Google Drive link](#) *(link coming soon)*
+
+After downloading, extract the archive so that the `data/` directory sits at the repo root:
+
+```
+data/
+  auto-labeled/   ← Wikipedia splits, training features, MLP checkpoints
+  helm/
+    data/         ← HELM prompts + labeled continuations (data.json per model)
+    hd/           ← hidden-state features (hd_<strategy>.json per model)
+```
+
+The result CSVs under `data/helm/results/` are committed directly to the repo and do not need to be downloaded.
+
+---
+
 ## Environment
 
 ```bash

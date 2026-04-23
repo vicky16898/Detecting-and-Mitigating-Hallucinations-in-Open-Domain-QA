@@ -18,3 +18,8 @@ data/helm/data/*
 !data/helm/data/*/
 data/helm/data/*/*
 !data/helm/data/*/data.json
+!data/helm/results/
+data/helm/results/*
+!data/helm/results/*/
+data/helm/results/*/*
+!data/helm/results/*/*.csv
