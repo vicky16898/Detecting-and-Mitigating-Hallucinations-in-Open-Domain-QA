@@ -6,32 +6,67 @@ This project extends the [MIND paper (ACL 2024)](https://arxiv.org/abs/2407.1294
 
 The full dataset (auto-labeled training data, HELM continuations, hidden-state features, and trained checkpoints) is too large to store in the repo and is hosted on Google Drive.
 
-**Download:** [Google Drive link](#) *(link coming soon)*
+Run the setup script to download and extract it in one step (requires `gdown`):
 
-After downloading, extract the archive so that the `data/` directory sits at the repo root:
-
-```
-data/
-  auto-labeled/   ← Wikipedia splits, training features, MLP checkpoints
-  helm/
-    data/         ← HELM prompts + labeled continuations (data.json per model)
-    hd/           ← hidden-state features (hd_<strategy>.json per model)
+```bash
+pip install gdown
+bash setup_data.sh
 ```
 
-The result CSVs under `data/helm/results/` are committed directly to the repo and do not need to be downloaded.
+This removes any existing `data/` folder, downloads the archive from Drive, and extracts it — so the structure is always clean. The result CSVs under `data/helm/results/` are also committed directly to the repo.
 
 ---
 
 ## Environment
 
 ```bash
-conda create -n odtformer python=3.9
+conda create -n odtformer python=3.9 -y
 conda activate odtformer
-pip install torch==2.0.1
+
+# Install PyTorch with CUDA 11.7 (matches the cluster v100-sxm2 driver)
+pip install torch==2.0.1+cu117 torchvision==0.15.2+cu117 \
+    --index-url https://download.pytorch.org/whl/cu117
+
+# Install remaining dependencies
 pip install -r requirements.txt
+
+# Download the spaCy model used by generate_data.py
+python -m spacy download en_core_web_sm
 ```
 
-On the cluster all scripts are run via `sbatch scripts/<name>.sh`. Logs go to `slurm_logs/`.
+For CPU-only (no GPU), replace the torch install line with:
+```bash
+pip install torch==2.0.1
+```
+
+On the cluster all scripts are run via `sbatch scripts/<name>.sh`. Logs go to `slurm_logs/`. Set `OPENAI_API_KEY` in your environment before running `label_helm_data.py`.
+
+---
+
+## Demo: hallucination detection on a single paragraph
+
+Requires a trained checkpoint (included in the Drive download). Generates a response to the input paragraph, extracts hidden-state features, and prints a hallucination prediction.
+
+```bash
+python src/demo.py \
+  --paragraph "Marie Curie was born in Warsaw in 1867." \
+  --model_name llama3base8b \
+  --strategy original \
+  --gpu 0
+```
+
+The checkpoint is looked up automatically at `data/auto-labeled/output/<model_name>/<strategy>/train_log/best_acc_model.pt`. Pass `--ckpt_path /path/to/best_acc_model.pt` to override. Add `--debug` to print feature norms and raw logits.
+
+**`--model_name`** — models with trained checkpoints in the Drive download:
+- `llama3base8b` — LLaMA 3.1 8B (base)
+- `gptj` — GPT-J 7B
+
+**`--strategy`** — feature extraction strategy (must match the checkpoint):
+- `original` — 2-channel baseline from the MIND paper (`2 × hidden_dim`)
+- `multi_layer` — full multi-layer features: last-token concat + mean-pool + deltas (`10 × hidden_dim`)
+- `multi_layer_last_token` — last-token concat only (`5 × hidden_dim`)
+- `multi_layer_mean` — mean-pool only (`3 × hidden_dim`)
+- `multi_layer_deltas` — layer deltas only (`2 × hidden_dim`)
 
 ---
 
