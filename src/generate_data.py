@@ -284,7 +284,8 @@ for data_type in ["train", "valid", "test"]:
                 if next_ in indices[0].tolist():
                     break
                 sequences = output.sequences
-
+            
+            # next_ is a sentinel marking the end of the real entity. The window gives the model slack to finish generating whatever it thinks the entity is. The token embeddings used downstream come from the hidden states recorded at the position of the last generated token when the model produced next_ — that's the "prediction boundary" where hallucination is detected.
             if next_ not in indices[0].tolist():
                 continue
 
