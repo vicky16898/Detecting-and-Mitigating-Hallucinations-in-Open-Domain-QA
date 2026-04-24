@@ -4,7 +4,7 @@ Demo: generate a response to a paragraph and detect if it's hallucinated.
 Usage:
     python demo.py --paragraph "Marie Curie was born in Warsaw in 1867." \
                    --model_name llama3base8b \
-                   --strategy multi_layer \
+                   --strategy multi_layer_mean \
                    --ckpt_path data/auto-labeled/output/llama3base8b/multi_layer/train_log/best_acc_model.pt \
                    --gpu 0
 """
