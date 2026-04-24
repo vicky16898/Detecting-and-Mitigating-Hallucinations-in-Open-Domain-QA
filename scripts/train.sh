@@ -11,11 +11,6 @@
 
 set -eo pipefail
 
-source /home/${USER}/.bashrc
-source activate odtformer
-
-cd /projects/vig/ajay/persistent_memory/Detecting-and-Mitigating-Hallucinations-in-Open-Domain-QA
-
 # train.py argument defaults
 MODEL_NAME="gptj7b"
 OUTPUT_PATH="./data/auto-labeled/output"

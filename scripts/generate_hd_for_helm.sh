@@ -9,10 +9,6 @@
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:h200:1
 
-source /home/${USER}/.bashrc
-source activate odtformer
-
-cd /projects/vig/ajay/persistent_memory/Detecting-and-Mitigating-Hallucinations-in-Open-Domain-QA
 python src/generate_hd_for_helm.py --model_family gptj --model_type 7 --strategy multi_layer --gpu 0
 
 echo "Done!"
