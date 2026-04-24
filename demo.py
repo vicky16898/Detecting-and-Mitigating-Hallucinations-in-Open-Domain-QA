@@ -5,7 +5,6 @@ Usage:
     python demo.py --paragraph "Marie Curie was born in Warsaw in 1867." \
                    --model_name llama3base8b \
                    --strategy multi_layer_mean \
-                   --ckpt_path data/auto-labeled/output/llama3base8b/multi_layer_mean/train_log/best_acc_model.pt \
                    --gpu 0
 """
 import warnings
@@ -142,7 +141,12 @@ def main():
     )
     if not os.path.exists(ckpt_path):
         print(f"Checkpoint not found: {ckpt_path}")
-        sys.exit(1)
+        print("Attempting to download from Google Drive...")
+        fetch_script = os.path.join(os.path.dirname(__file__), "scripts", "fetch_checkpoints.sh")
+        ret = os.system(f"bash {fetch_script} {args.model_name} {args.strategy}")
+        if ret != 0 or not os.path.exists(ckpt_path):
+            print("Download failed. Provide --ckpt_path or fill in scripts/fetch_checkpoints.sh.")
+            sys.exit(1)
 
     config = get_model_config(args.model_name)
     # Ablation strategies share the multi_layer feature files but have smaller input sizes

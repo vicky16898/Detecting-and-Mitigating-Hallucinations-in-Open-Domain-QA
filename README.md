@@ -2,26 +2,6 @@
 
 This project extends the [MIND paper (ACL 2024)](https://arxiv.org/abs/2407.12943) with multi-layer hidden-state features and a HELM evaluation pipeline.
 
-## Data
-
-The full dataset (auto-labeled training data, HELM continuations, hidden-state features, and trained checkpoints) is too large to store in the repo and is hosted on Google Drive.
-
-Run the setup script to download and extract it in one step (requires `gdown`):
-
-```bash
-pip install gdown
-
-# Mac / Linux
-bash setup_data.sh
-
-# Windows (PowerShell)
-python setup_data.py
-```
-
-This removes any existing `data/` folder, downloads the archive from Drive, and extracts it — so the structure is always clean. The result CSVs under `data/helm/results/` are also committed directly to the repo.
-
----
-
 ## Environment
 
 ```bash
@@ -50,7 +30,7 @@ On the cluster all scripts are run via `sbatch scripts/<name>.sh`. Logs go to `s
 
 ## Demo: hallucination detection on a single paragraph
 
-Requires a trained checkpoint (included in the Drive download). Generates a response to the input paragraph, extracts hidden-state features, and prints a hallucination prediction.
+No data setup required — just install dependencies and run. The checkpoint for the requested model/strategy is downloaded automatically from Google Drive on first use (requires `gdown`).
 
 ```bash
 python demo.py \
@@ -60,7 +40,7 @@ python demo.py \
   --gpu 0
 ```
 
-The checkpoint is looked up automatically at `data/auto-labeled/output/<model_name>/<strategy>/train_log/best_acc_model.pt`. Pass `--ckpt_path /path/to/best_acc_model.pt` to override. Add `--debug` to print feature norms and raw logits.
+The checkpoint is fetched and cached at `data/auto-labeled/output/<model_name>/<strategy>/train_log/best_acc_model.pt`. Subsequent runs skip the download. Pass `--ckpt_path /path/to/best_acc_model.pt` to use a custom checkpoint. Add `--debug` to print feature norms and raw logits.
 
 **`--model_name`** — models with trained checkpoints in the Drive download:
 - `llama3base8b` — LLaMA 3.1 8B (base)
@@ -72,6 +52,28 @@ The checkpoint is looked up automatically at `data/auto-labeled/output/<model_na
 - `multi_layer_last_token` — last-token concat only (`5 × hidden_dim`)
 - `multi_layer_mean` — mean-pool only (`3 × hidden_dim`)
 - `multi_layer_deltas` — layer deltas only (`2 × hidden_dim`)
+
+---
+
+## Data
+
+The full dataset (auto-labeled training data, HELM continuations, hidden-state features, and trained checkpoints) is too large to store in the repo and is hosted on Google Drive.
+
+**For the demo only** — no setup needed. Checkpoints are downloaded automatically on first run.
+
+**For training or HELM evaluation** — download the full archive in one step (requires `gdown`):
+
+```bash
+pip install gdown
+
+# Mac / Linux
+bash setup_data.sh
+
+# Windows (PowerShell)
+python setup_data.py
+```
+
+This removes any existing `data/` folder, downloads the archive from Drive, and extracts it — so the structure is always clean. The result CSVs under `data/helm/results/` are also committed directly to the repo.
 
 ---
 
