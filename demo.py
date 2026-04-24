@@ -167,11 +167,10 @@ def main():
     print("\n--- Extracting hidden-state features ---")
     features = extract_hidden_features(model, tokenizer, args.paragraph, response, model_family, args.strategy)
 
-    print("--- Scoring ---")
+    print("--- Predicted Result ---")
     prob_hallu = score(clf, device, features, feature_keys)
-    label = "HALLUCINATED" if prob_hallu >= 0.5 else "NOT hallucinated"
+    label = "HALLUCINATED" if prob_hallu >= 0.5 else "NOT HALLUCINATED"
 
-    print(f"\nHallucination probability : {prob_hallu:.4f}")
     print(f"Prediction                : {label}")
 
 

@@ -56,7 +56,7 @@ Requires a trained checkpoint (included in the Drive download). Generates a resp
 python demo.py \
   --paragraph "Marie Curie was born in Warsaw in 1867." \
   --model_name llama3base8b \
-  --strategy original \
+  --strategy multi_layer_mean \
   --gpu 0
 ```
 
