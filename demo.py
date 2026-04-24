@@ -8,6 +8,8 @@ Usage:
                    --ckpt_path data/auto-labeled/output/llama3base8b/multi_layer/train_log/best_acc_model.pt \
                    --gpu 0
 """
+import warnings
+warnings.filterwarnings('ignore')
 
 import os
 import sys
