@@ -18,7 +18,8 @@ def get_model(model_type, model_family, max_new_tokens=1):
         model, tokenizer, generation_config, at_id
     """
     at_id = None
-    device_map = "auto" if torch.cuda.is_available() else {"": "cpu"}
+    use_gpu = torch.cuda.is_available()
+    device_map = "auto" if use_gpu else {"": "cpu"}
 
     # ──────────────────────────────────────────────
     # Determine model path
@@ -64,7 +65,7 @@ def get_model(model_type, model_family, max_new_tokens=1):
     if model_family.startswith("llama3"):
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float16 if use_gpu else torch.float32,
             low_cpu_mem_usage=True,
             device_map=device_map
         )
