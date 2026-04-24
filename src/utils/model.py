@@ -18,6 +18,7 @@ def get_model(model_type, model_family, max_new_tokens=1):
         model, tokenizer, generation_config, at_id
     """
     at_id = None
+    device_map = "auto" if torch.cuda.is_available() else {"": "cpu"}
 
     # ──────────────────────────────────────────────
     # Determine model path
@@ -65,7 +66,7 @@ def get_model(model_type, model_family, max_new_tokens=1):
             model_path,
             torch_dtype=torch.float16,
             low_cpu_mem_usage=True,
-            device_map='auto'
+            device_map=device_map
         )
         tokenizer = AutoTokenizer.from_pretrained(model_path)
 
@@ -88,7 +89,7 @@ def get_model(model_type, model_family, max_new_tokens=1):
             load_in_8bit=False,
             torch_dtype=torch.float32,
             low_cpu_mem_usage=True,
-            device_map='auto'
+            device_map=device_map
         )
         tokenizer = AutoTokenizer.from_pretrained(model_path)
         at_id = 732
@@ -104,7 +105,7 @@ def get_model(model_type, model_family, max_new_tokens=1):
         config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
         model = AutoModelForCausalLM.from_pretrained(
             model_path, config=config, torch_dtype=torch.float32,
-            trust_remote_code=True, low_cpu_mem_usage=True, device_map="auto"
+            trust_remote_code=True, low_cpu_mem_usage=True, device_map=device_map
         )
         at_id = [3757, 92952]
 
@@ -115,7 +116,7 @@ def get_model(model_type, model_family, max_new_tokens=1):
             torch_dtype=torch.float32,
             low_cpu_mem_usage=True,
             trust_remote_code=True,
-            device_map='auto'
+            device_map=device_map
         )
         tokenizer = AutoTokenizer.from_pretrained(model_path)
 
@@ -125,7 +126,7 @@ def get_model(model_type, model_family, max_new_tokens=1):
             model_path,
             torch_dtype=torch.float32,
             low_cpu_mem_usage=True,
-            device_map='auto'
+            device_map=device_map
         )
         tokenizer = AutoTokenizer.from_pretrained(model_path)
 
