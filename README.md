@@ -28,19 +28,50 @@ On the cluster all scripts are run via `sbatch scripts/<name>.sh`. Logs go to `s
 
 ---
 
+## Accessing the LLaMA model (gated)
+
+LLaMA 3.1 is a gated model on Hugging Face and requires explicit access approval before you can download it.
+
+1. Create or log in to your Hugging Face account at [huggingface.co](https://huggingface.co).
+2. Go to the model page: [meta-llama/Meta-Llama-3.1-8B](https://huggingface.co/meta-llama/Meta-Llama-3.1-8B).
+3. Click **"Request access"** and fill in the form (name, intended use, agreement to Meta's license).
+4. Wait for approval — this typically takes a few minutes.
+5. Once approved, generate a Hugging Face token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) and set it in your environment:
+
+```bash
+export HF_TOKEN=your_token_here
+```
+
+The scripts that load LLaMA will pick up `HF_TOKEN` automatically.
+
+---
+
 ## Demo: hallucination detection on a single paragraph
 
 No data setup required — just install dependencies and run. The checkpoint for the requested model/strategy is downloaded automatically from Google Drive on first use (requires `gdown`).
 
+**Run built-in examples** (default — no `--paragraph` needed):
+
 ```bash
 python demo.py \
-  --paragraph "Marie Curie was born in Warsaw in 1867." \
+  --model_name llama3base8b \
+  --strategy multi_layer_mean \
+  --gpu 0
+```
+
+**Run on a custom prompt:**
+
+```bash
+python demo.py \
+  --paragraph "Who is the president of the United States?" \
   --model_name llama3base8b \
   --strategy multi_layer_mean \
   --gpu 0
 ```
 
 The checkpoint is fetched and cached at `data/auto-labeled/output/<model_name>/<strategy>/train_log/best_acc_model.pt`. Subsequent runs skip the download. Pass `--ckpt_path /path/to/best_acc_model.pt` to use a custom checkpoint. Add `--debug` to print feature norms and raw logits.
+
+When no `--paragraph` is given, demo mode runs automatically with three built-in prompts to verify the classifier end-to-end.
 
 **`--model_name`** — models with trained checkpoints in the Drive download:
 - `llama3base8b` — LLaMA 3.1 8B (base)
