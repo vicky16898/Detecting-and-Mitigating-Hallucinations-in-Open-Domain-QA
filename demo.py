@@ -2,7 +2,13 @@
 Demo: generate a response to a paragraph and detect if it's hallucinated.
 
 Usage:
-    python demo.py --paragraph "Marie Curie was born in Warsaw in 1867." \
+    python demo.py --paragraph "Who is the president of united states?" \
+                   --model_name llama3base8b \
+                   --strategy multi_layer_mean \
+                   --gpu 0
+
+    # Run built-in true/false examples to verify the classifier:
+    python demo.py --demo \
                    --model_name llama3base8b \
                    --strategy multi_layer_mean \
                    --gpu 0
@@ -15,7 +21,9 @@ import sys
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--paragraph",  type=str, required=True, help="Input paragraph/prompt")
+parser.add_argument("--paragraph",  type=str, default=None, help="Input paragraph/prompt")
+parser.add_argument("--demo",       action="store_true", default=True,
+                    help="Run built-in hallucinated and non-hallucinated examples")
 parser.add_argument("--model_name", type=str, default="llama3base8b",
                     choices=["llama3base8b", "gptj"])
 parser.add_argument("--strategy",   type=str, default="multi_layer",
@@ -28,6 +36,9 @@ parser.add_argument("--gpu",        type=str, default="0")
 parser.add_argument("--debug",      action="store_true", help="Print feature norms and start_at for diagnosis")
 args = parser.parse_args()
 
+if not args.demo and args.paragraph is None:
+    parser.error("--paragraph is required unless --demo is set")
+
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
 import torch
@@ -37,6 +48,13 @@ from src.utils.model import get_model
 from src.utils.multi_layer import get_model_config, get_input_size, get_feature_keys, extract_features
 from src.utils.gen import find_answer_start, chat_format_modern
 from src.classifier import HalluClassifier
+
+# Built-in demo paragraphs: (paragraph, max_new_tokens)
+DEMO_EXAMPLES = [
+    ("Who is the preseident of united states?", 50),
+    ("Is sun inside the earth?", 50),
+    ("Who is vaibhav sankaran", 50),
+]
 
 
 # ─────────────────────────────────────────────────────────
@@ -129,6 +147,24 @@ def score(clf, device, features, feature_keys):
     return prob_hallu
 
 
+def run_single(model, tokenizer, generation_config, clf, device, feature_keys,
+               model_family, paragraph, max_new_tokens=None):
+    if max_new_tokens is None:
+        max_new_tokens = args.max_new_tokens
+    print(f"\n--- Generating response ---")
+    response = generate_response(model, tokenizer, generation_config, paragraph, model_family, max_new_tokens)
+    print(f"Paragraph : {paragraph}")
+    print(f"Response  : {response}")
+
+    print("\n--- Extracting hidden-state features ---")
+    features = extract_hidden_features(model, tokenizer, paragraph, response, model_family, args.strategy)
+
+    print("--- Predicted Result ---")
+    prob_hallu = score(clf, device, features, feature_keys)
+    label = "HALLUCINATED" if prob_hallu >= 0.5 else "NOT HALLUCINATED"
+    print(f"Prediction                : {label}")
+
+
 # ─────────────────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────────────────
@@ -149,7 +185,6 @@ def main():
             sys.exit(1)
 
     config = get_model_config(args.model_name)
-    # Ablation strategies share the multi_layer feature files but have smaller input sizes
     input_size = get_input_size(config["hidden_dim"], config["num_layers"], args.strategy)
     feature_keys = get_feature_keys(args.strategy)
 
@@ -165,19 +200,17 @@ def main():
     print("Loading hallucination classifier...")
     clf, device = load_classifier(input_size, ckpt_path)
 
-    print("\n--- Generating response ---")
-    response = generate_response(model, tokenizer, generation_config, args.paragraph, model_family, args.max_new_tokens)
-    print(f"Paragraph : {args.paragraph}")
-    print(f"Response  : {response}")
-
-    print("\n--- Extracting hidden-state features ---")
-    features = extract_hidden_features(model, tokenizer, args.paragraph, response, model_family, args.strategy)
-
-    print("--- Predicted Result ---")
-    prob_hallu = score(clf, device, features, feature_keys)
-    label = "HALLUCINATED" if prob_hallu >= 0.5 else "NOT HALLUCINATED"
-
-    print(f"Prediction                : {label}")
+    if args.demo:
+        print("\n========== DEMO MODE ==========")
+        for i, (paragraph, max_new_tokens) in enumerate(DEMO_EXAMPLES, 1):
+            print(f"\n{'='*40}")
+            print(f"Example {i}/{len(DEMO_EXAMPLES)}")
+            run_single(model, tokenizer, generation_config, clf, device, feature_keys,
+                       model_family, paragraph, max_new_tokens=max_new_tokens)
+        print(f"\n{'='*40}")
+    else:
+        run_single(model, tokenizer, generation_config, clf, device, feature_keys,
+                   model_family, args.paragraph)
 
 
 if __name__ == "__main__":
